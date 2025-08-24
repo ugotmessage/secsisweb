@@ -1,0 +1,80 @@
+{
+  "site": {
+    "title": "美國保健品代購｜正品保證・快速送達台灣",
+    "description": "美國保健品代購｜正品保證・快速送達台灣。維他命C、魚油、膠原蛋白、益生菌等。",
+    "keywords": "美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌",
+    "url": "",
+    "ogImage": ""
+  },
+  "brand": {
+    "text": "HealthShop 代購",
+    "mark": "HS"
+  },
+  "contact": {
+    "lineId": "@yourlineid",
+    "email": "service@yourbrand.tw"
+  },
+  "content": {
+    "hero": {
+      "title": "美國保健品代購",
+      "subtitle": "正品保證・快速送達台灣",
+      "ctaPrimary": "立即下單",
+      "ctaSecondary": "加入LINE洽詢",
+      "note": "支援多品牌代購：維他命C、魚油、膠原蛋白、益生菌等"
+    },
+    "sections": {
+      "products": {
+        "title": "熱銷推薦",
+        "subtitle": "精選美國熱賣保健品，支援客製代購與組合詢價"
+      },
+      "how": {
+        "title": "代購流程",
+        "steps": [
+          {
+            "icon": "📝",
+            "title": "下單",
+            "description": "選擇商品並加入詢問清單，填寫聯絡方式送出。"
+          },
+          {
+            "icon": "✈️",
+            "title": "代購",
+            "description": "我們於美國採購正品並安排空運或集運。"
+          },
+          {
+            "icon": "📦",
+            "title": "收貨",
+            "description": "完成清關後寄送至台灣地址，提供物流追蹤。"
+          }
+        ]
+      },
+      "faq": {
+        "title": "常見問題",
+        "items": [
+          {
+            "question": "運送時間需要多久？",
+            "answer": "一般狀況下約 7-14 個工作天（不含假日），旺季與通關查驗可能延長。"
+          },
+          {
+            "question": "如何付款？",
+            "answer": "提供台灣銀行轉帳或行動支付。確認商品與金額後再行付款。"
+          },
+          {
+            "question": "是否會被課稅？需要提供什麼資料？",
+            "answer": "依台灣海關規定可能課徵進口稅。若需報關可能請您提供身分證字號作實名認證。"
+          },
+          {
+            "question": "是否保證正品？",
+            "answer": "所有商品均自美國正規通路採購並保留單據，保障您的權益。"
+          }
+        ]
+      },
+      "contact": {
+        "title": "聯絡我們"
+      }
+    },
+    "footer": {
+      "copyright": "© 2024 HealthShop. All rights reserved.",
+      "disclaimer": "本網站所述商品為一般營養補充品，非醫療或治療用途。實際效果因人而異，如有身體不適請諮詢專業醫師。"
+    }
+  }
+}

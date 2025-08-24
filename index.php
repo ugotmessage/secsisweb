@@ -1,16 +1,46 @@
 <?php
-$config = require __DIR__ . '/config.php';
-$siteTitle = htmlspecialchars($config['siteTitle'] ?? '美國保健品代購｜正品保證・快速送達台灣', ENT_QUOTES, 'UTF-8');
-$brandText = htmlspecialchars($config['brandText'] ?? 'HealthShop 代購', ENT_QUOTES, 'UTF-8');
-$brandMark = htmlspecialchars($config['brandMark'] ?? 'HS', ENT_QUOTES, 'UTF-8');
-$lineIdRaw = (string)($config['lineId'] ?? '@yourlineid');
-$emailRaw = (string)($config['email'] ?? 'service@yourbrand.tw');
+// 載入站台設定
+$siteConfigFile = __DIR__ . '/data/site-config.json';
+$defaultConfig = [
+    'site' => [
+        'title' => '美國保健品代購｜正品保證・快速送達台灣',
+        'description' => '美國保健品代購｜正品保證・快速送達台灣。維他命C、魚油、膠原蛋白、益生菌等。',
+        'keywords' => '美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌',
+        'url' => '',
+        'ogImage' => ''
+    ],
+    'brand' => [
+        'text' => 'HealthShop 代購',
+        'mark' => 'HS'
+    ],
+    'contact' => [
+        'lineId' => '@yourlineid',
+        'email' => 'service@yourbrand.tw'
+    ]
+];
+
+if (file_exists($siteConfigFile)) {
+    $jsonContent = file_get_contents($siteConfigFile);
+    $siteConfig = json_decode($jsonContent, true);
+    if (!is_array($siteConfig)) {
+        $siteConfig = $defaultConfig;
+    }
+} else {
+    $siteConfig = $defaultConfig;
+}
+
+// 提取設定值
+$siteTitle = htmlspecialchars($siteConfig['site']['title'], ENT_QUOTES, 'UTF-8');
+$brandText = htmlspecialchars($siteConfig['brand']['text'], ENT_QUOTES, 'UTF-8');
+$brandMark = htmlspecialchars($siteConfig['brand']['mark'], ENT_QUOTES, 'UTF-8');
+$lineIdRaw = (string)($siteConfig['contact']['lineId']);
+$emailRaw = (string)($siteConfig['contact']['email']);
 $lineUrl = 'https://line.me/ti/p/' . rawurlencode($lineIdRaw);
 $emailHref = 'mailto:' . $emailRaw . '?subject=' . rawurlencode('保健品代購詢問');
-$seoDesc = htmlspecialchars($config['seoDescription'] ?? '美國保健品代購｜正品保證・快速送達台灣。維他命C、魚油、膠原蛋白、益生菌等。', ENT_QUOTES, 'UTF-8');
-$seoKeywords = htmlspecialchars($config['seoKeywords'] ?? '美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌', ENT_QUOTES, 'UTF-8');
-$siteUrl = rtrim((string)($config['siteUrl'] ?? ''), '/');
-$ogImage = (string)($config['ogImage'] ?? '');
+$seoDesc = htmlspecialchars($siteConfig['site']['description'], ENT_QUOTES, 'UTF-8');
+$seoKeywords = htmlspecialchars($siteConfig['site']['keywords'], ENT_QUOTES, 'UTF-8');
+$siteUrl = rtrim((string)($siteConfig['site']['url']), '/');
+$ogImage = (string)($siteConfig['site']['ogImage']);
 $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
 ?>
 <!doctype html>
@@ -18,6 +48,9 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="description" content="<?php echo $seoDesc; ?>" />
     <meta name="keywords" content="<?php echo $seoKeywords; ?>" />
     <?php if($canonical){ ?>
@@ -108,7 +141,52 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
           <h2 class="section-title">熱銷推薦</h2>
           <p class="section-subtitle">精選美國熱賣保健品，支援客製代購與組合詢價</p>
           <div class="product-grid">
-            <!-- 由 JS 動態渲染商品 -->
+            <?php
+            // 檢查 JSON 檔案是否存在
+            $productsFile = __DIR__ . '/data/products.json';
+            if (file_exists($productsFile)) {
+              $jsonContent = file_get_contents($productsFile);
+              $products = json_decode($jsonContent, true);
+              
+              if (is_array($products)) {
+                foreach ($products as $product) {
+                  $imgHtml = '';
+                  if (!empty($product['img'])) {
+                    $imgHtml = '<img src="' . htmlspecialchars($product['img'], ENT_QUOTES, 'UTF-8') . '" alt="' . htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') . ' 示意圖" style="width: 100%; height: 100%; object-fit: cover;">';
+                  } else {
+                    // 使用預設樣式
+                    $imgHtml = '<div class="default-product-img ' . htmlspecialchars($product['id'], ENT_QUOTES, 'UTF-8') . '" aria-label="' . htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') . ' 預設圖示">' . getProductIcon($product['id']) . '</div>';
+                  }
+                  
+                  echo '<article class="product-card" data-id="' . htmlspecialchars($product['id'], ENT_QUOTES, 'UTF-8') . '" data-name="' . htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') . '">';
+                  echo '<div class="product-image-wrap">' . $imgHtml . '</div>';
+                  echo '<div class="product-info">';
+                  echo '<h3>' . htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') . '</h3>';
+                  echo '<p>' . htmlspecialchars($product['desc'], ENT_QUOTES, 'UTF-8') . '</p>';
+                  echo '<button class="btn btn-add add-to-inquiry">加入詢問清單</button>';
+                  echo '</div>';
+                  echo '</article>';
+                }
+              } else {
+                echo '<!-- JSON 解析失敗，使用 JS 渲染 -->';
+              }
+            } else {
+              echo '<!-- JSON 檔案不存在，使用 JS 渲染 -->';
+            }
+            
+            // 輔助函數：取得產品圖示
+            function getProductIcon($productId) {
+              $productIcons = [
+                'vitamin-c' => 'VC',
+                'fish-oil' => 'Ω3',
+                'collagen' => '膠原',
+                'probiotics' => '益生',
+                'multi-vitamin' => 'MV',
+                'vitamin-d' => 'VD'
+              ];
+              return $productIcons[$productId] ?? '?';
+            }
+            ?>
           </div>
         </div>
       </section>
@@ -168,20 +246,28 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
           <h2 class="section-title">聯絡我們</h2>
           <div class="contact-grid">
             <div class="contact-cards">
-              <a class="contact-card line" id="lineCardLink" href="<?php echo htmlspecialchars($lineUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
+              <div class="contact-card line">
                 <span class="contact-icon">💬</span>
                 <div>
                   <strong>加入 LINE 洽詢</strong>
                   <div class="muted" id="lineIdText"><?php echo htmlspecialchars($lineIdRaw, ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div class="contact-actions">
+                    <button class="btn btn-sm btn-outline copy-btn" data-copy="<?php echo htmlspecialchars($lineIdRaw, ENT_QUOTES, 'UTF-8'); ?>" data-type="line">複製 ID</button>
+                    <a id="lineCardLink" href="<?php echo htmlspecialchars($lineUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-primary">加入好友</a>
+                  </div>
                 </div>
-              </a>
-              <a class="contact-card email" id="emailLink" href="<?php echo htmlspecialchars($emailHref, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
+              </div>
+              <div class="contact-card email">
                 <span class="contact-icon">✉️</span>
                 <div>
                   <strong>Email</strong>
                   <div class="muted" id="emailText"><?php echo htmlspecialchars($emailRaw, ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div class="contact-actions">
+                    <button class="btn btn-sm btn-outline copy-btn" data-copy="<?php echo htmlspecialchars($emailRaw, ENT_QUOTES, 'UTF-8'); ?>" data-type="email">複製信箱</button>
+                    <!--<a id="emailLink" href="<?php echo htmlspecialchars($emailHref, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-sm btn-primary">發送郵件</a>-->
+                  </div>
                 </div>
-              </a>
+              </div>
             </div>
 
             <form id="contactForm" class="contact-form" autocomplete="on">
@@ -267,9 +353,43 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <div class="drawer-body">
         <div class="admin-actions">
           <button class="btn btn-outline" id="addProductBtn">新增商品</button>
+          <button class="btn btn-outline" id="reloadProducts">重新載入商品</button>
+          <button class="btn btn-outline" id="editSiteConfig">編輯站台設定</button>
           <button class="btn btn-danger" id="resetDefaults">重置為預設商品</button>
         </div>
         <ul class="product-admin-list" id="productAdminList"></ul>
+        <hr class="admin-sep" />
+        
+        <!-- 站台設定編輯表單 -->
+        <div id="siteConfigForm" class="admin-form" style="display: none;">
+          <h4>站台設定</h4>
+          <div class="form-field">
+            <label for="siteTitle">網站標題</label>
+            <input type="text" id="siteTitle" required />
+          </div>
+          <div class="form-field">
+            <label for="brandText">品牌名稱</label>
+            <input type="text" id="brandText" required />
+          </div>
+          <div class="form-field">
+            <label for="brandMark">品牌標記</label>
+            <input type="text" id="brandMark" required />
+          </div>
+          <div class="form-field">
+            <label for="lineId">LINE ID</label>
+            <input type="text" id="lineId" required />
+          </div>
+          <div class="form-field">
+            <label for="email">聯絡信箱</label>
+            <input type="email" id="email" required />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-primary" id="saveSiteConfig">儲存設定</button>
+            <button type="button" class="btn btn-outline" id="resetSiteConfig">重置設定</button>
+            <button type="button" class="btn btn-outline" id="closeSiteConfig">關閉</button>
+          </div>
+        </div>
+        
         <hr class="admin-sep" />
         <form id="productForm" class="admin-form" autocomplete="off">
           <input type="hidden" id="editingId" />

@@ -113,11 +113,14 @@
   
   async function loadProducts(){
     try{
-      const response = await fetch('./products-public.php');
+      // 加入時間戳防止快取
+      const timestamp = Date.now();
+      const response = await fetch(`./products-public.php?t=${timestamp}`);
       if(!response.ok) throw new Error('API_ERROR');
       const data = await response.json();
       if(data.ok && Array.isArray(data.products)){
         cachedProducts = data.products;
+        console.log('成功載入商品資料:', data.products);
         return data.products;
       }
       throw new Error('INVALID_RESPONSE');
@@ -148,9 +151,8 @@
   }
   
   async function getProducts(){
-    if(cachedProducts.length === 0){
-      await loadProducts();
-    }
+    // 強制重新載入，不使用快取
+    await loadProducts();
     return cachedProducts;
   }
   
@@ -220,82 +222,47 @@
         const src = resolveImageSrc(p.img);
         console.log('商品', p.name, '解析後圖片路徑:', src); // 除錯用
         
-        // 嘗試載入圖片
-        const $img = $('<img/>', { alt: `${p.name} 示意圖` });
+        // 直接使用 IMG 標籤，簡單直接
+        const $img = $('<img/>', { 
+          src: src,
+          alt: `${p.name} 示意圖`,
+          style: 'width: 100%; height: 100%; object-fit: cover;'
+        });
         
         // 圖片載入成功
         $img.on('load', function(){
           console.log('圖片載入成功:', src);
-          $(this).css('border', '2px solid green');
         });
         
-        // 圖片載入失敗 - 使用本地 SVG 或 CSS 預設圖片
+        // 圖片載入失敗 - 使用預設圖片
         $img.on('error', function(){
           console.error('圖片載入失敗:', src);
           $(this).remove();
           
-          // 嘗試使用本地 SVG 檔案
-          const localSvgPath = `/images/default/${p.id}.svg`;
-          console.log('嘗試載入本地 SVG:', localSvgPath);
-          
-          const $svgImg = $('<img/>', { alt: `${p.name} 預設圖示` });
-          $svgImg.on('load', function(){
-            console.log('本地 SVG 載入成功:', localSvgPath);
-            $(this).css('border', '2px solid blue');
-          });
-          $svgImg.on('error', function(){
-            console.error('本地 SVG 也載入失敗:', localSvgPath);
-            $(this).remove();
-            
-            // 最後使用 CSS 預設圖片
-            const productType = p.id;
-            const $defaultImg = $('<div/>', { 
-              class: `default-product-img ${productType}`,
-              'aria-label': `${p.name} 預設圖示`
-            });
-            const iconText = getProductIcon(p.id);
-            $defaultImg.text(iconText);
-            $imgWrap.append($defaultImg);
-            console.log('使用 CSS 預設圖片:', productType);
-          });
-          
-          $svgImg.attr('src', localSvgPath);
-          $imgWrap.append($svgImg);
-        });
-        
-        // 設定圖片來源並開始載入
-        $img.attr('src', src);
-        $imgWrap.append($img);
-      }else{
-        console.log('商品', p.name, '使用預設示意圖');
-        
-        // 優先嘗試本地 SVG 檔案
-        const localSvgPath = `/images/default/${p.id}.svg`;
-        console.log('嘗試載入本地 SVG:', localSvgPath);
-        
-        const $svgImg = $('<img/>', { alt: `${p.name} 預設圖示` });
-        $svgImg.on('load', function(){
-          console.log('本地 SVG 載入成功:', localSvgPath);
-          $(this).css('border', '2px solid blue');
-        });
-        $svgImg.on('error', function(){
-          console.error('本地 SVG 載入失敗:', localSvgPath);
-          $(this).remove();
-          
-          // 使用 CSS 預設圖片
-          const productType = p.id;
+          // 使用預設圖片
           const $defaultImg = $('<div/>', { 
-            class: `default-product-img ${productType}`,
+            class: `default-product-img ${p.id}`,
             'aria-label': `${p.name} 預設圖示`
           });
           const iconText = getProductIcon(p.id);
           $defaultImg.text(iconText);
           $imgWrap.append($defaultImg);
-          console.log('使用 CSS 預設圖片:', productType);
+          console.log('使用預設圖片:', p.id);
         });
         
-        $svgImg.attr('src', localSvgPath);
-        $imgWrap.append($svgImg);
+        $imgWrap.append($img);
+      }else{
+        console.log('商品', p.name, '使用預設示意圖');
+        
+        // 使用預設圖片
+        const $defaultImg = $('<div/>', { 
+          class: `default-product-img ${p.id}`,
+          'aria-label': `${p.name} 預設圖示`
+        });
+        const iconText = getProductIcon(p.id);
+        $defaultImg.text(iconText);
+        $imgWrap.append($defaultImg);
+        console.log('使用預設圖片:', p.id);
       }
       
       const $info = $('<div/>', { class:'product-info' });
@@ -337,12 +304,90 @@
   $('#clearInquiry').on('click', function(){ clearItems(); });
   $('#inquiryList').on('click', '.remove-btn', function(){ removeItem($(this).data('id')); });
   $('#toContact').on('click', function(){ closeDrawer(); scrollToContact(); });
+  
+  // 複製功能
+  $(document).on('click', '.copy-btn', function(){
+    const text = $(this).data('copy');
+    const type = $(this).data('type');
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      // 使用現代 Clipboard API
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = $(this).text();
+        $(this).text('已複製！').addClass('copied');
+        setTimeout(() => {
+          $(this).text(originalText).removeClass('copied');
+        }, 2000);
+        toast(`${type === 'line' ? 'LINE ID' : '信箱'}已複製到剪貼簿`);
+      }).catch(() => {
+        fallbackCopyText(text, type);
+      });
+    } else {
+      // 降級方案
+      fallbackCopyText(text, type);
+    }
+  });
+  
+  function fallbackCopyText(text, type) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      toast(`${type === 'line' ? 'LINE ID' : '信箱'}已複製到剪貼簿`);
+    } catch (err) {
+      toast('複製失敗，請手動複製');
+    }
+    
+    document.body.removeChild(textArea);
+  }
 
   // Admin bindings
   $('.admin-toggle').on('click', openAdmin);
   $('#closeAdmin, #adminOverlay').on('click', closeAdmin);
   $('#resetDefaults').on('click', function(){ resetProducts(); });
   $('#addProductBtn').on('click', function(){ if(!isAuthedLocal()){ toast('需管理權限'); return; } clearForm(); $prodName.focus(); });
+  $('#reloadProducts').on('click', async function(){ 
+    if(!isAuthedLocal()){ toast('需管理權限'); return; } 
+    toast('重新載入中...');
+    await renderProducts();
+    await renderAdminList();
+    toast('商品已重新載入');
+  });
+  
+  // 站台設定編輯
+  $('#editSiteConfig').on('click', async function(){
+    console.log('點擊編輯站台設定按鈕');
+    if(!isAuthedLocal()){ toast('需管理權限'); return; }
+    console.log('開始載入站台設定...');
+    await loadSiteConfig();
+    console.log('顯示站台設定表單');
+    $('#siteConfigForm').show();
+    $('#productForm').hide();
+  });
+  
+  $('#closeSiteConfig').on('click', function(){
+    $('#siteConfigForm').hide();
+    $('#productForm').show();
+  });
+  
+  $('#saveSiteConfig').on('click', async function(){
+    if(!isAuthedLocal()){ toast('需管理權限'); return; }
+    await saveSiteConfig();
+  });
+  
+  $('#resetSiteConfig').on('click', async function(){
+    if(!isAuthedLocal()){ toast('需管理權限'); return; }
+    if(confirm('確定要重置為預設設定嗎？')) {
+      await resetSiteConfig();
+    }
+  });
   $adminList.on('click', '.btn-danger', function(){ deleteProduct($(this).data('id')); });
   $adminList.on('click', '.btn-outline', async function(){ const id = $(this).data('id'); const products = await getProducts(); const p = products.find(x => x.id === id); if(p){ fillForm(p); } });
 
@@ -361,6 +406,96 @@
     clearForm();
   });
   $('#cancelEdit').on('click', function(){ clearForm(); });
+
+  // 站台設定相關函數
+  async function loadSiteConfig(){
+    try{
+      const res = await fetch('./site-config.php', { 
+        method: 'GET',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      if(!res.ok){ throw new Error('LOAD_FAILED'); }
+      const json = await res.json();
+      if(json && json.ok && json.config){
+        const cfg = json.config;
+        $('#siteTitle').val(cfg.site?.title || '');
+        $('#brandText').val(cfg.brand?.text || '');
+        $('#brandMark').val(cfg.brand?.mark || '');
+        $('#lineId').val(cfg.contact?.lineId || '');
+        $('#email').val(cfg.contact?.email || '');
+        toast('設定已載入');
+      }else{
+        throw new Error('INVALID_RESPONSE');
+      }
+    }catch(e){
+      console.error('載入站台設定失敗:', e);
+      toast('載入設定失敗');
+    }
+  }
+  
+  async function saveSiteConfig(){
+    try{
+      const config = {
+        site: {
+          title: $('#siteTitle').val().trim(),
+          description: '美國保健品代購｜正品保證・快速送達台灣。維他命C、魚油、膠原蛋白、益生菌等。',
+          keywords: '美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌',
+          url: '',
+          ogImage: ''
+        },
+        brand: {
+          text: $('#brandText').val().trim(),
+          mark: $('#brandMark').val().trim()
+        },
+        contact: {
+          lineId: $('#lineId').val().trim(),
+          email: $('#email').val().trim()
+        }
+      };
+      
+      if(!config.site.title || !config.brand.text || !config.brand.mark || !config.contact.lineId || !config.contact.email){
+        toast('請填寫所有必要欄位');
+        return;
+      }
+      
+      const res = await fetch('./site-config.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      
+      if(!res.ok){ throw new Error('SAVE_FAILED'); }
+      const json = await res.json();
+      if(json && json.ok){
+        toast('設定已儲存');
+        // 重新載入頁面以套用新設定
+        setTimeout(() => location.reload(), 1000);
+      }else{
+        throw new Error('SAVE_FAILED');
+      }
+    }catch(e){
+      console.error('儲存站台設定失敗:', e);
+      toast('儲存設定失敗');
+    }
+  }
+  
+  async function resetSiteConfig(){
+    try{
+      const res = await fetch('./site-config.php', { method: 'PUT' });
+      if(!res.ok){ throw new Error('RESET_FAILED'); }
+      const json = await res.json();
+      if(json && json.ok){
+        toast('設定已重置');
+        // 重新載入頁面以套用預設設定
+        setTimeout(() => location.reload(), 1000);
+      }else{
+        throw new Error('RESET_FAILED');
+      }
+    }catch(e){
+      console.error('重置站台設定失敗:', e);
+      toast('重置設定失敗');
+    }
+  }
 
   // 圖片上傳
   $prodFile.on('change', async function(){
@@ -410,7 +545,91 @@
 
   // Footer year
   (function(){ var y = new Date().getFullYear(); $('#year').text(y); })();
+  
+  // 聯絡表單提交
+  $('#contactForm').on('submit', async function(e){
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // 加入詢問清單
+    if(items.length > 0){
+      data.inquiry = JSON.stringify(items);
+    }
+    
+    try {
+      const res = await fetch('./contact-submit.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if(!res.ok){ throw new Error('SUBMIT_FAILED'); }
+      const json = await res.json();
+      
+      if(json && json.ok){
+        // 顯示聯絡選項
+        showContactOptions(json.contactOptions, data.name);
+        
+        // 清空表單和詢問清單
+        this.reset();
+        clearItems();
+        
+        toast(json.message);
+      }else{
+        throw new Error('SUBMIT_FAILED');
+      }
+    }catch(e){
+      console.error('提交聯絡表單失敗:', e);
+      toast('提交失敗，請稍後再試');
+    }
+  });
+  
+  function showContactOptions(options, name) {
+    let optionsHtml = '<div class="contact-options-modal">';
+    optionsHtml += '<h3>選擇聯絡方式</h3>';
+    optionsHtml += '<p>您的詢問已送出，請選擇以下任一方式與我們聯絡：</p>';
+    optionsHtml += '<div class="contact-options-grid">';
+    
+    options.forEach(option => {
+      optionsHtml += `
+        <div class="contact-option">
+          <span class="option-icon">${option.icon}</span>
+          <div class="option-content">
+            <h4>${option.name}</h4>
+            <p>${option.description}</p>
+            <a href="${option.action}" target="_blank" rel="noopener" class="btn btn-primary">立即聯絡</a>
+          </div>
+        </div>
+      `;
+    });
+    
+    optionsHtml += '</div></div>';
+    
+    // 顯示模態框
+    $('body').append(optionsHtml);
+    setTimeout(() => $('.contact-options-modal').addClass('show'), 100);
+    
+    // 點擊背景關閉
+    $('.contact-options-modal').on('click', function(e){
+      if(e.target === this) {
+        $(this).remove();
+      }
+    });
+  }
 
   // Init
-  (async function(){ await ensureStatus(); renderProducts(); refreshUI(); })();
+  (async function(){ 
+    await ensureStatus(); 
+    
+    // 檢查是否已經有 PHP 渲染的商品
+    if ($('.product-card').length === 0) {
+      // 沒有商品時才使用 JS 渲染
+      await renderProducts(); 
+    } else {
+      console.log('PHP 已渲染商品，跳過 JS 渲染');
+    }
+    
+    refreshUI(); 
+  })();
 })(jQuery);

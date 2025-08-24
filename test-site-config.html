@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試站台設定</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <h1>站台設定測試</h1>
+    
+    <button id="testLoad">測試載入設定</button>
+    <button id="testSave">測試儲存設定</button>
+    <button id="testReset">測試重置設定</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function testLoadConfig() {
+            try {
+                const res = await fetch('./site-config.php', { 
+                    method: 'GET',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+                const json = await res.json();
+                $('#result').html('<pre>' + JSON.stringify(json, null, 2) + '</pre>');
+            } catch (e) {
+                $('#result').html('<p style="color: red;">錯誤: ' + e.message + '</p>');
+            }
+        }
+        
+        async function testSaveConfig() {
+            try {
+                const config = {
+                    site: {
+                        title: '測試標題',
+                        description: '測試描述',
+                        keywords: '測試關鍵字',
+                        url: '',
+                        ogImage: ''
+                    },
+                    brand: {
+                        text: '測試品牌',
+                        mark: 'TB'
+                    },
+                    contact: {
+                        lineId: '@testline',
+                        email: 'test@example.com'
+                    }
+                };
+                
+                const res = await fetch('./site-config.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const json = await res.json();
+                $('#result').html('<pre>' + JSON.stringify(json, null, 2) + '</pre>');
+            } catch (e) {
+                $('#result').html('<p style="color: red;">錯誤: ' + e.message + '</p>');
+            }
+        }
+        
+        async function testResetConfig() {
+            try {
+                const res = await fetch('./site-config.php', { method: 'PUT' });
+                const json = await res.json();
+                $('#result').html('<pre>' + JSON.stringify(json, null, 2) + '</pre>');
+            } catch (e) {
+                $('#result').html('<p style="color: red;">錯誤: ' + e.message + '</p>');
+            }
+        }
+        
+        $('#testLoad').on('click', testLoadConfig);
+        $('#testSave').on('click', testSaveConfig);
+        $('#testReset').on('click', testResetConfig);
+    </script>
+</body>
+</html>

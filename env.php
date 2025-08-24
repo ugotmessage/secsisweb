@@ -19,6 +19,7 @@ function __env_load_once(){
   }
   return $data;
 }
+
 function env($key, $default = null){
   $val = getenv($key);
   if($val !== false && $val !== ''){ return $val; }

@@ -1,0 +1,38 @@
+[
+    {
+        "id": "vitamin-c",
+        "name": "維他命C 1000mg",
+        "desc": "高劑量每日補給，增強體力與精神，常備保健首選。",
+        "img": "\/uploads\/e8ea544c149a5b41-1755999556.jpg"
+    },
+    {
+        "id": "fish-oil",
+        "name": "高濃度魚油",
+        "desc": "Omega-3 含量高，支持心血管健康與日常保養。",
+        "img": "\/images\/default\/fish-oil.svg"
+    },
+    {
+        "id": "collagen",
+        "name": "膠原蛋白粉",
+        "desc": "美妍養護，添加維生素C 配方，沖泡方便好入口。",
+        "img": "\/images\/default\/collagen.svg"
+    },
+    {
+        "id": "probiotics",
+        "name": "益生菌複方",
+        "desc": "多菌株高含量，幫助調整體質，維持消化道機能。",
+        "img": "\/images\/default\/probiotics.svg"
+    },
+    {
+        "id": "multi-vitamin",
+        "name": "綜合維他命",
+        "desc": "全方位補給日常所需營養素，簡單一次到位。",
+        "img": "\/images\/default\/multi-vitamin.svg"
+    },
+    {
+        "id": "vitamin-d",
+        "name": "維他命D3 2000 IU",
+        "desc": "居家必備好朋友，幫助鈣質吸收與免疫防護。",
+        "img": "\/images\/default\/vitamin-d.svg"
+    }
+]

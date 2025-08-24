@@ -9,5 +9,6 @@
 
 /uploads/*
 /data/products.json
+/data/site-config.json
 /logs/*.log
 /images/default/*.svg
