@@ -150,10 +150,10 @@ $__capNonce = bin2hex(random_bytes(8));
       ]
     ], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT); ?>
     </script>
-    <title><?php echo $siteTitle; ?></title>
     <?php
     require_once __DIR__ . '/env.php';
-    echo env('TRACKING_CODE', '');
+    echo env('CLOUDFLARE_TRACKING_CODE', '') . "\n";
+    echo env('SIMPLE_TRACKING_CODE', '') . "\n";
     ?>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
