@@ -25,6 +25,19 @@ if (!$input) {
     $input = $_POST;
 }
 
+// 反濫用驗證：蜜罐、簡易加總、人類提交時間
+$honeypot = trim((string)($input['website'] ?? ''));
+$ca = (int)($input['ca'] ?? 0);
+$cb = (int)($input['cb'] ?? 0);
+$captcha = (int)($input['captcha'] ?? 0);
+$ts = (int)($input['ts'] ?? 0);
+$nowMs = (int)(microtime(true) * 1000);
+if ($honeypot !== '' || ($ca + $cb) !== $captcha || ($nowMs - $ts) < 1500) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'CAPTCHA_FAILED']);
+    exit;
+}
+
 // 驗證必要欄位
 $required = ['name', 'email', 'message'];
 foreach ($required as $field) {

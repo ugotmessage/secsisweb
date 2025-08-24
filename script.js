@@ -352,7 +352,15 @@
   $('.admin-toggle').on('click', openAdmin);
   $('#closeAdmin, #adminOverlay').on('click', closeAdmin);
   $('#resetDefaults').on('click', function(){ resetProducts(); });
-  $('#addProductBtn').on('click', function(){ if(!isAuthedLocal()){ toast('需管理權限'); return; } clearForm(); $prodName.focus(); });
+  $('#addProductBtn').on('click', function(){ 
+    if(!isAuthedLocal()){ toast('需管理權限'); return; } 
+    // 確保顯示商品編輯表單
+    $('#siteConfigForm').hide();
+    $('#productForm').show();
+    clearForm(); 
+    $prodName.focus(); 
+    console.log('切換到新增商品表單'); // 除錯用
+  });
   $('#reloadProducts').on('click', async function(){ 
     if(!isAuthedLocal()){ toast('需管理權限'); return; } 
     toast('重新載入中...');
@@ -370,11 +378,13 @@
     console.log('顯示站台設定表單');
     $('#siteConfigForm').show();
     $('#productForm').hide();
+    console.log('站台設定表單已顯示，商品表單已隱藏');
   });
   
   $('#closeSiteConfig').on('click', function(){
     $('#siteConfigForm').hide();
     $('#productForm').show();
+    console.log('關閉站台設定，顯示商品表單');
   });
   
   $('#saveSiteConfig').on('click', async function(){
@@ -389,7 +399,18 @@
     }
   });
   $adminList.on('click', '.btn-danger', function(){ deleteProduct($(this).data('id')); });
-  $adminList.on('click', '.btn-outline', async function(){ const id = $(this).data('id'); const products = await getProducts(); const p = products.find(x => x.id === id); if(p){ fillForm(p); } });
+  $adminList.on('click', '.btn-outline', async function(){ 
+    const id = $(this).data('id'); 
+    const products = await getProducts(); 
+    const p = products.find(x => x.id === id); 
+    if(p){ 
+      // 確保顯示商品編輯表單
+      $('#siteConfigForm').hide();
+      $('#productForm').show();
+      fillForm(p); 
+      console.log('切換到商品編輯表單'); // 除錯用
+    } 
+  });
 
   $productForm.on('submit', function(e){
     e.preventDefault();
@@ -423,6 +444,8 @@
         $('#brandMark').val(cfg.brand?.mark || '');
         $('#lineId').val(cfg.contact?.lineId || '');
         $('#email').val(cfg.contact?.email || '');
+        // 將完整設定放入 JSON 編輯器
+        try{ $('#siteConfigJson').val(JSON.stringify(cfg, null, 2)); }catch(_){ $('#siteConfigJson').val(''); }
         toast('設定已載入');
       }else{
         throw new Error('INVALID_RESPONSE');
@@ -435,41 +458,52 @@
   
   async function saveSiteConfig(){
     try{
-      const config = {
-        site: {
-          title: $('#siteTitle').val().trim(),
-          description: '美國保健品代購｜正品保證・快速送達台灣。維他命C、魚油、膠原蛋白、益生菌等。',
-          keywords: '美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌',
-          url: '',
-          ogImage: ''
-        },
-        brand: {
-          text: $('#brandText').val().trim(),
-          mark: $('#brandMark').val().trim()
-        },
-        contact: {
-          lineId: $('#lineId').val().trim(),
-          email: $('#email').val().trim()
+      // 若使用者於 JSON 區塊輸入內容，優先使用
+      const raw = ($('#siteConfigJson').val() || '').trim();
+      let payload;
+      if(raw){
+        try{
+          payload = JSON.parse(raw);
+        }catch(e){
+          toast('JSON 格式錯誤，請檢查後再試');
+          return;
         }
-      };
-      
-      if(!config.site.title || !config.brand.text || !config.brand.mark || !config.contact.lineId || !config.contact.email){
-        toast('請填寫所有必要欄位');
-        return;
+      } else {
+        // 以表單欄位組成
+        payload = {
+          site: {
+            title: $('#siteTitle').val().trim(),
+            description: '美國保健品代購｜正品保證・快速送達台灣。維他命C、魚油、膠原蛋白、益生菌等。',
+            keywords: '美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌',
+            url: '',
+            ogImage: ''
+          },
+          brand: {
+            text: $('#brandText').val().trim(),
+            mark: $('#brandMark').val().trim()
+          },
+          contact: {
+            lineId: $('#lineId').val().trim(),
+            email: $('#email').val().trim()
+          }
+        };
+        if(!payload.site.title || !payload.brand.text || !payload.brand.mark || !payload.contact.lineId || !payload.contact.email){
+          toast('請填寫所有必要欄位');
+          return;
+        }
       }
-      
+
       const res = await fetch('./site-config.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+        body: JSON.stringify(payload)
       });
       
       if(!res.ok){ throw new Error('SAVE_FAILED'); }
       const json = await res.json();
       if(json && json.ok){
         toast('設定已儲存');
-        // 重新載入頁面以套用新設定
-        setTimeout(() => location.reload(), 1000);
+        setTimeout(() => location.reload(), 800);
       }else{
         throw new Error('SAVE_FAILED');
       }
@@ -543,14 +577,42 @@
     }
   }
 
-  // Footer year
-  (function(){ var y = new Date().getFullYear(); $('#year').text(y); })();
+  // Footer year - 已移除，改用 PHP 變數
   
+  // 產生人機驗證（加總題）
+  function genCaptcha(){
+    const a = Math.floor(1 + Math.random()*9);
+    const b = Math.floor(1 + Math.random()*9);
+    $('#captchaQ').text(`${a} + ${b} = ?`);
+    $('#captchaA').val(String(a));
+    $('#captchaB').val(String(b));
+    $('#captchaTs').val(String(Date.now()));
+    $('#captchaNonce').val(Math.random().toString(36).slice(2));
+  }
+
+  // 初始時產生題目
+  genCaptcha();
+  
+  // 初始化管理介面表單狀態
+  function initAdminForms() {
+    // 確保初始狀態：商品表單隱藏，站台設定表單隱藏
+    $('#productForm').hide();
+    $('#siteConfigForm').hide();
+    console.log('管理介面表單已初始化');
+  }
+
   // 聯絡表單提交
   $('#contactForm').on('submit', async function(e){
     e.preventDefault();
     const formData = new FormData(this);
     const data = Object.fromEntries(formData);
+
+    // 前端簡單驗證：蜜罐需為空、答題需正確
+    if((data.website||'').trim() !== ''){ toast('提交失敗'); return; }
+    const a = parseInt(String(data.ca||'0'),10)||0;
+    const b = parseInt(String(data.cb||'0'),10)||0;
+    const ans = parseInt(String(data.captcha||'0'),10)||0;
+    if(a + b !== ans){ toast('人機驗證錯誤'); genCaptcha(); return; }
     
     // 加入詢問清單
     const items = getItems();
@@ -630,5 +692,11 @@
     }
     
     refreshUI(); 
+    
+    // 初始化管理介面表單狀態
+    initAdminForms();
+    
+    // 保險：初始化結束後再產生一次人機驗證題目
+    if($('#captchaQ').length){ genCaptcha(); }
   })();
 })(jQuery);

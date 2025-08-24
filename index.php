@@ -16,6 +16,45 @@ $defaultConfig = [
     'contact' => [
         'lineId' => '@yourlineid',
         'email' => 'service@yourbrand.tw'
+    ],
+    'content' => [
+        'hero' => [
+            'title' => '美國保健品代購',
+            'subtitle' => '正品保證・快速送達台灣',
+            'ctaPrimary' => '立即下單',
+            'ctaSecondary' => '加入LINE洽詢',
+            'note' => '支援多品牌代購：維他命C、魚油、膠原蛋白、益生菌等'
+        ],
+        'sections' => [
+            'products' => [
+                'title' => '熱銷推薦',
+                'subtitle' => '精選美國熱賣保健品，支援客製代購與組合詢價'
+            ],
+            'how' => [
+                'title' => '代購流程',
+                'steps' => [
+                    ['icon' => '📝', 'title' => '下單', 'description' => '選擇商品並加入詢問清單，填寫聯絡方式送出。'],
+                    ['icon' => '✈️', 'title' => '代購', 'description' => '我們於美國採購正品並安排空運或集運。'],
+                    ['icon' => '📦', 'title' => '收貨', 'description' => '完成清關後寄送至台灣地址，提供物流追蹤。']
+                ]
+            ],
+            'faq' => [
+                'title' => '常見問題',
+                'items' => [
+                    ['summary' => '運送時間需要多久？', 'content' => '一般狀況下約 7-14 個工作天（不含假日），旺季與通關查驗可能延長。'],
+                    ['summary' => '如何付款？', 'content' => '提供台灣銀行轉帳或行動支付。確認商品與金額後再行付款。'],
+                    ['summary' => '是否會被課稅？需要提供什麼資料？', 'content' => '依台灣海關規定可能課徵進口稅。若需報關可能請您提供身分證字號作實名認證。'],
+                    ['summary' => '是否保證正品？', 'content' => '所有商品均自美國正規通路採購並保留單據，保障您的權益。']
+                ]
+            ],
+            'contact' => [
+                'title' => '聯絡我們'
+            ]
+        ],
+        'footer' => [
+            'copyright' => '© 2024 HealthShop. All rights reserved.',
+            'disclaimer' => '本網站所述商品為一般營養補充品，非醫療或治療用途。實際效果因人而異，如有身體不適請諮詢專業醫師。'
+        ]
     ]
 ];
 
@@ -42,6 +81,33 @@ $seoKeywords = htmlspecialchars($siteConfig['site']['keywords'], ENT_QUOTES, 'UT
 $siteUrl = rtrim((string)($siteConfig['site']['url']), '/');
 $ogImage = (string)($siteConfig['site']['ogImage']);
 $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
+
+// 提取內容設定
+$heroTitle = htmlspecialchars($siteConfig['content']['hero']['title'] ?? '美國保健品代購', ENT_QUOTES, 'UTF-8');
+$heroSubtitle = htmlspecialchars($siteConfig['content']['hero']['subtitle'] ?? '正品保證・快速送達台灣', ENT_QUOTES, 'UTF-8');
+$heroCtaPrimary = htmlspecialchars($siteConfig['content']['hero']['ctaPrimary'] ?? '立即下單', ENT_QUOTES, 'UTF-8');
+$heroCtaSecondary = htmlspecialchars($siteConfig['content']['hero']['ctaSecondary'] ?? '加入LINE洽詢', ENT_QUOTES, 'UTF-8');
+$heroNote = htmlspecialchars($siteConfig['content']['hero']['note'] ?? '支援多品牌代購：維他命C、魚油、膠原蛋白、益生菌等', ENT_QUOTES, 'UTF-8');
+
+$productsTitle = htmlspecialchars($siteConfig['content']['sections']['products']['title'] ?? '熱銷推薦', ENT_QUOTES, 'UTF-8');
+$productsSubtitle = htmlspecialchars($siteConfig['content']['sections']['products']['subtitle'] ?? '精選美國熱賣保健品，支援客製代購與組合詢價', ENT_QUOTES, 'UTF-8');
+
+$howTitle = htmlspecialchars($siteConfig['content']['sections']['how']['title'] ?? '代購流程', ENT_QUOTES, 'UTF-8');
+$howSteps = $siteConfig['content']['sections']['how']['steps'] ?? [];
+
+$faqTitle = htmlspecialchars($siteConfig['content']['sections']['faq']['title'] ?? '常見問題', ENT_QUOTES, 'UTF-8');
+$faqItems = $siteConfig['content']['sections']['faq']['items'] ?? [];
+
+$contactTitle = htmlspecialchars($siteConfig['content']['sections']['contact']['title'] ?? '聯絡我們', ENT_QUOTES, 'UTF-8');
+
+$footerCopyright = htmlspecialchars($siteConfig['content']['footer']['copyright'] ?? '© 2024 HealthShop. All rights reserved.', ENT_QUOTES, 'UTF-8');
+$footerDisclaimer = htmlspecialchars($siteConfig['content']['footer']['disclaimer'] ?? '本網站所述商品為一般營養補充品，非醫療或治療用途。實際效果因人而異，如有身體不適請諮詢專業醫師。', ENT_QUOTES, 'UTF-8');
+
+// 伺服器產生 CAPTCHA（避免前端執行時機問題）
+$__capA = random_int(1, 9);
+$__capB = random_int(1, 9);
+$__capTs = (int)round(microtime(true) * 1000);
+$__capNonce = bin2hex(random_bytes(8));
 ?>
 <!doctype html>
 <html lang="zh-Hant-TW">
@@ -85,7 +151,10 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
     ], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT); ?>
     </script>
     <title><?php echo $siteTitle; ?></title>
-
+    <?php
+    require_once __DIR__ . '/env.php';
+    echo env('TRACKING_CODE', '');
+    ?>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
@@ -109,7 +178,7 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
           <button class="cart-toggle" aria-controls="inquiryDrawer" aria-expanded="false">
             詢問清單 <span class="cart-count" id="cartCount">0</span>
           </button>
-          <button class="admin-toggle" aria-controls="adminDrawer" aria-expanded="false">商品管理</button>
+          <button class="admin-toggle" aria-controls="adminDrawer" aria-expanded="false" style="display:none">商品管理</button>
         </div>
       </div>
     </header>
@@ -119,13 +188,13 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <section class="hero">
         <div class="container hero-inner">
           <div class="hero-content">
-            <h1>美國保健品代購</h1>
-            <p class="subtitle">正品保證・快速送達台灣</p>
+            <h1><?php echo $heroTitle; ?></h1>
+            <p class="subtitle"><?php echo $heroSubtitle; ?></p>
             <div class="hero-ctas">
-              <a href="#contact" class="btn btn-primary">立即下單</a>
-              <a id="lineLink" href="<?php echo htmlspecialchars($lineUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener" class="btn btn-outline">加入LINE洽詢</a>
+              <a href="#contact" class="btn btn-primary"><?php echo $heroCtaPrimary; ?></a>
+              <a id="lineLink" href="<?php echo htmlspecialchars($lineUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener" class="btn btn-outline"><?php echo $heroCtaSecondary; ?></a>
             </div>
-            <p class="hero-note">支援多品牌代購：維他命C、魚油、膠原蛋白、益生菌等</p>
+            <p class="hero-note"><?php echo $heroNote; ?></p>
           </div>
           <div class="hero-art" aria-hidden="true">
             <div class="pill pill-a"></div>
@@ -138,8 +207,8 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <!-- Featured Products -->
       <section class="section" id="products">
         <div class="container">
-          <h2 class="section-title">熱銷推薦</h2>
-          <p class="section-subtitle">精選美國熱賣保健品，支援客製代購與組合詢價</p>
+          <h2 class="section-title"><?php echo $productsTitle; ?></h2>
+          <p class="section-subtitle"><?php echo $productsSubtitle; ?></p>
           <div class="product-grid">
             <?php
             // 檢查 JSON 檔案是否存在
@@ -194,23 +263,15 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <!-- How It Works -->
       <section class="section section-alt" id="how">
         <div class="container">
-          <h2 class="section-title">代購流程</h2>
+          <h2 class="section-title"><?php echo $howTitle; ?></h2>
           <div class="steps">
+            <?php foreach ($howSteps as $step) { ?>
             <div class="step">
-              <div class="step-icon" aria-hidden="true">📝</div>
-              <h3>下單</h3>
-              <p>選擇商品並加入詢問清單，填寫聯絡方式送出。</p>
+              <div class="step-icon" aria-hidden="true"><?php echo $step['icon']; ?></div>
+              <h3><?php echo $step['title']; ?></h3>
+              <p><?php echo $step['description']; ?></p>
             </div>
-            <div class="step">
-              <div class="step-icon" aria-hidden="true">✈️</div>
-              <h3>代購</h3>
-              <p>我們於美國採購正品並安排空運或集運。</p>
-            </div>
-            <div class="step">
-              <div class="step-icon" aria-hidden="true">📦</div>
-              <h3>收貨</h3>
-              <p>完成清關後寄送至台灣地址，提供物流追蹤。</p>
-            </div>
+            <?php } ?>
           </div>
         </div>
       </section>
@@ -218,24 +279,14 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <!-- FAQ -->
       <section class="section" id="faq">
         <div class="container">
-          <h2 class="section-title">常見問題</h2>
+          <h2 class="section-title"><?php echo $faqTitle; ?></h2>
           <div class="faq">
-            <details>
-              <summary>運送時間需要多久？</summary>
-              <p>一般狀況下約 7-14 個工作天（不含假日），旺季與通關查驗可能延長。</p>
-            </details>
-            <details>
-              <summary>如何付款？</summary>
-              <p>提供台灣銀行轉帳或行動支付。確認商品與金額後再行付款。</p>
-            </details>
-            <details>
-              <summary>是否會被課稅？需要提供什麼資料？</summary>
-              <p>依台灣海關規定可能課徵進口稅。若需報關可能請您提供身分證字號作實名認證。</p>
-            </details>
-            <details>
-              <summary>是否保證正品？</summary>
-              <p>所有商品均自美國正規通路採購並保留單據，保障您的權益。</p>
-            </details>
+                         <?php foreach ($faqItems as $item) { ?>
+              <details>
+               <summary><?php echo htmlspecialchars($item['question'], ENT_QUOTES, 'UTF-8'); ?></summary>
+               <p><?php echo htmlspecialchars($item['answer'], ENT_QUOTES, 'UTF-8'); ?></p>
+              </details>
+             <?php } ?>
           </div>
         </div>
       </section>
@@ -243,7 +294,7 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <!-- Contact -->
       <section class="section section-alt" id="contact">
         <div class="container">
-          <h2 class="section-title">聯絡我們</h2>
+          <h2 class="section-title"><?php echo $contactTitle; ?></h2>
           <div class="contact-grid">
             <div class="contact-cards">
               <div class="contact-card line">
@@ -295,6 +346,25 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
                 <label for="message">想詢問的內容</label>
                 <textarea id="message" name="message" rows="4" placeholder="請簡述想購買的商品或問題"></textarea>
               </div>
+              
+              <!-- 人機驗證：簡單的加總題 -->
+              <div class="form-field">
+                <label for="captchaAnswer">人機驗證：<span id="captchaQ"><?php echo $__capA . ' + ' . $__capB . ' = ?'; ?></span></label>
+                <input type="number" id="captchaAnswer" name="captcha" inputmode="numeric" placeholder="請輸入答案" required />
+              </div>
+              
+              <!-- 蜜罐欄位（請保持為空） -->
+              <div class="hp-field" hidden aria-hidden="true">
+                <label for="website">您的網站（請勿填寫）</label>
+                <input type="text" id="website" name="website" autocomplete="off" />
+              </div>
+              
+              <!-- 隱藏欄位：驗證參數 -->
+              <input type="hidden" id="captchaA" name="ca" value="<?php echo $__capA; ?>" />
+              <input type="hidden" id="captchaB" name="cb" value="<?php echo $__capB; ?>" />
+              <input type="hidden" id="captchaTs" name="ts" value="<?php echo $__capTs; ?>" />
+              <input type="hidden" id="captchaNonce" name="nonce" value="<?php echo $__capNonce; ?>" />
+              
               <input type="hidden" id="inquiryPayload" name="inquiry" />
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary">送出詢問</button>
@@ -311,11 +381,11 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
       <div class="container footer-inner">
         <div>
           <div class="logo footer-logo"><span class="logo-mark"><?php echo $brandMark; ?></span><span class="logo-text" id="brandTextFooter"><?php echo $brandText; ?></span></div>
-          <p class="muted">© <span id="year"></span> HealthShop. All rights reserved.</p>
+          <p class="muted"><?php echo $footerCopyright; ?></p>
         </div>
         <div class="disclaimer">
           <strong>非醫療聲明：</strong>
-          本網站所述商品為一般營養補充品，非醫療或治療用途。實際效果因人而異，如有身體不適請諮詢專業醫師。
+          <?php echo $footerDisclaimer; ?>
         </div>
       </div>
     </footer>
@@ -383,6 +453,11 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
             <label for="email">聯絡信箱</label>
             <input type="email" id="email" required />
           </div>
+          <div class="form-field">
+            <label for="siteConfigJson">進階：完整站台設定 JSON</label>
+            <textarea id="siteConfigJson" rows="12" placeholder="在此貼上或編輯完整 site-config.json，留白則僅儲存上方欄位"></textarea>
+            <div class="muted">提示：若此欄位有有效 JSON，將以此為準直接儲存到 data/site-config.json。</div>
+          </div>
           <div class="form-actions">
             <button type="button" class="btn btn-primary" id="saveSiteConfig">儲存設定</button>
             <button type="button" class="btn btn-outline" id="resetSiteConfig">重置設定</button>
@@ -391,7 +466,7 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
         </div>
         
         <hr class="admin-sep" />
-        <form id="productForm" class="admin-form" autocomplete="off">
+        <form id="productForm" class="admin-form" autocomplete="off" style="display: none;">
           <input type="hidden" id="editingId" />
           <div class="form-field">
             <label for="prodName">商品名稱</label>
@@ -425,6 +500,6 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
     </button>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="./script.js"></script>
+    <script src="./script.js?v=<?php echo filemtime(__DIR__.'/script.js'); ?>"></script>
   </body>
 </html>
