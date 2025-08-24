@@ -1,6 +1,12 @@
 <?php
+// 載入時區設定
+require_once __DIR__ . '/timezone-config.php';
+
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
+
+// 載入環境變數函數
+require_once __DIR__ . '/env.php';
 
 // 載入設定
 $config = require __DIR__ . '/config.php';
@@ -65,87 +71,31 @@ $logFile = $logDir . '/contact-submissions.log';
 $logEntry = date('Y-m-d H:i:s') . ' | ' . json_encode($contactData, JSON_UNESCAPED_UNICODE) . "\n";
 @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 
+// 自動發送訊息到啟用的平台
+$enabledPlatform = env('COMMUNICATION_PLATFORM', 'telegram');
+if ($enabledPlatform !== 'email') {
+    require_once __DIR__ . '/api-templates.php';
+    $api = new CommunicationAPI();
+    $message = $api->formatMessage($contactData);
+    
+    // 發送訊息
+    $sendResult = $api->sendMessage($enabledPlatform, $message);
+    
+    // 記錄發送結果
+    $sendLogFile = $logDir . '/auto-send.log';
+    $sendLogEntry = date('Y-m-d H:i:s') . ' | ' . json_encode([
+        'platform' => $enabledPlatform,
+        'result' => $sendResult,
+        'contactData' => $contactData
+    ], JSON_UNESCAPED_UNICODE) . "\n";
+    @file_put_contents($sendLogFile, $sendLogEntry, FILE_APPEND | LOCK_EX);
+}
+
 // 準備回應資料
 $response = [
     'ok' => true,
-    'message' => '您的詢問已送出，我們會盡快回覆您！',
-    'contactOptions' => []
+    'message' => '您的詢問已送出，我們會盡快回覆您！'
 ];
-
-// 根據設定提供不同的聯絡選項
-$siteConfigFile = __DIR__ . '/data/site-config.json';
-if (file_exists($siteConfigFile)) {
-    $jsonContent = file_get_contents($siteConfigFile);
-    $siteConfig = json_decode($jsonContent, true);
-    
-    if (is_array($siteConfig)) {
-        $contact = $siteConfig['contact'] ?? [];
-        
-        // LINE 選項
-        if (!empty($contact['lineId'])) {
-            $response['contactOptions'][] = [
-                'type' => 'line',
-                'name' => 'LINE',
-                'description' => '加入 LINE 好友，即時洽詢',
-                'action' => 'https://line.me/ti/p/' . urlencode($contact['lineId']),
-                'icon' => '💬'
-            ];
-        }
-        
-        // Email 選項
-        if (!empty($contact['email'])) {
-            $response['contactOptions'][] = [
-                'type' => 'email',
-                'name' => 'Email',
-                'description' => '發送郵件詢問',
-                'action' => 'mailto:' . $contact['email'] . '?subject=' . urlencode('保健品代購詢問 - ' . $name),
-                'icon' => '✉️'
-            ];
-        }
-        
-        // Facebook Messenger 選項（如果設定中有）
-        if (!empty($contact['facebook'])) {
-            $response['contactOptions'][] = [
-                'type' => 'facebook',
-                'name' => 'Facebook Messenger',
-                'description' => '透過 Messenger 聯絡',
-                'action' => 'https://m.me/' . $contact['facebook'],
-                'icon' => '📘'
-            ];
-        }
-        
-        // Telegram 選項（如果設定中有）
-        if (!empty($contact['telegram'])) {
-            $response['contactOptions'][] = [
-                'type' => 'telegram',
-                'name' => 'Telegram',
-                'description' => '透過 Telegram 聯絡',
-                'action' => 'https://t.me/' . $contact['telegram'],
-                'icon' => '📱'
-            ];
-        }
-    }
-}
-
-// 如果沒有設定檔，提供預設選項
-if (empty($response['contactOptions'])) {
-    $response['contactOptions'] = [
-        [
-            'type' => 'line',
-            'name' => 'LINE',
-            'description' => '加入 LINE 好友，即時洽詢',
-            'action' => 'https://line.me/ti/p/@yourlineid',
-            'icon' => '💬'
-        ],
-        [
-            'type' => 'email',
-            'name' => 'Email',
-            'description' => '發送郵件詢問',
-            'action' => 'mailto:service@yourbrand.tw?subject=' . urlencode('保健品代購詢問 - ' . $name),
-            'icon' => '✉️'
-        ]
-    ];
-}
 
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
 ?>

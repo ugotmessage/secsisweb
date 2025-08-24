@@ -553,6 +553,7 @@
     const data = Object.fromEntries(formData);
     
     // 加入詢問清單
+    const items = getItems();
     if(items.length > 0){
       data.inquiry = JSON.stringify(items);
     }
@@ -568,13 +569,11 @@
       const json = await res.json();
       
       if(json && json.ok){
-        // 顯示聯絡選項
-        showContactOptions(json.contactOptions, data.name);
-        
         // 清空表單和詢問清單
         this.reset();
         clearItems();
         
+        // 顯示成功訊息
         toast(json.message);
       }else{
         throw new Error('SUBMIT_FAILED');

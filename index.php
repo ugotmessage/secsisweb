@@ -300,7 +300,7 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
                 <button type="submit" class="btn btn-primary">送出詢問</button>
                 <button type="button" class="btn btn-outline" id="openCart">查看詢問清單</button>
               </div>
-              <p class="form-note">按下送出後，系統會自動開啟 Email 草稿，內含您的詢問清單。</p>
+              <!--<p class="form-note">按下送出後，系統會自動開啟 Email 草稿，內含您的詢問清單。</p>-->
             </form>
           </div>
         </div>
