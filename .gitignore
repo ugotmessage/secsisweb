@@ -7,3 +7,7 @@
 # env files (can opt-in for committing if needed)
 .env*
 
+/uploads/*
+/data/products.json
+/logs/*.log
+/images/default/*.svg

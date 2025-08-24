@@ -2,6 +2,7 @@
 $config = require __DIR__ . '/config.php';
 $siteTitle = htmlspecialchars($config['siteTitle'] ?? '美國保健品代購｜正品保證・快速送達台灣', ENT_QUOTES, 'UTF-8');
 $brandText = htmlspecialchars($config['brandText'] ?? 'HealthShop 代購', ENT_QUOTES, 'UTF-8');
+$brandMark = htmlspecialchars($config['brandMark'] ?? 'HS', ENT_QUOTES, 'UTF-8');
 $lineIdRaw = (string)($config['lineId'] ?? '@yourlineid');
 $emailRaw = (string)($config['email'] ?? 'service@yourbrand.tw');
 $lineUrl = 'https://line.me/ti/p/' . rawurlencode($lineIdRaw);
@@ -62,7 +63,7 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
     <header class="site-header">
       <div class="container header-inner">
         <a href="#" class="logo" aria-label="首頁">
-          <span class="logo-mark">HS</span>
+          <span class="logo-mark"><?php echo $brandMark; ?></span>
           <span class="logo-text" id="brandText"><?php echo $brandText; ?></span>
         </a>
         <nav class="nav">
@@ -167,14 +168,14 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
           <h2 class="section-title">聯絡我們</h2>
           <div class="contact-grid">
             <div class="contact-cards">
-              <a class="contact-card" id="lineCardLink" href="<?php echo htmlspecialchars($lineUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
+              <a class="contact-card line" id="lineCardLink" href="<?php echo htmlspecialchars($lineUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
                 <span class="contact-icon">💬</span>
                 <div>
                   <strong>加入 LINE 洽詢</strong>
                   <div class="muted" id="lineIdText"><?php echo htmlspecialchars($lineIdRaw, ENT_QUOTES, 'UTF-8'); ?></div>
                 </div>
               </a>
-              <a class="contact-card" id="emailLink" href="<?php echo htmlspecialchars($emailHref, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
+              <a class="contact-card email" id="emailLink" href="<?php echo htmlspecialchars($emailHref, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
                 <span class="contact-icon">✉️</span>
                 <div>
                   <strong>Email</strong>
@@ -223,7 +224,7 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
     <footer class="site-footer">
       <div class="container footer-inner">
         <div>
-          <div class="logo footer-logo"><span class="logo-mark">HS</span><span class="logo-text" id="brandTextFooter"><?php echo $brandText; ?></span></div>
+          <div class="logo footer-logo"><span class="logo-mark"><?php echo $brandMark; ?></span><span class="logo-text" id="brandTextFooter"><?php echo $brandText; ?></span></div>
           <p class="muted">© <span id="year"></span> HealthShop. All rights reserved.</p>
         </div>
         <div class="disclaimer">
@@ -282,7 +283,12 @@ $canonical = $siteUrl ? ($siteUrl . '/index.php') : '';
           </div>
           <div class="form-field">
             <label for="prodImg">圖片網址</label>
-            <input type="url" id="prodImg" placeholder="https://..." />
+            <input type="text" id="prodImg" placeholder="/uploads/xxx.jpg 或 https://..." />
+          </div>
+          <div class="form-field">
+            <label for="prodFile">或上傳圖片（JPG/PNG/WebP/GIF）</label>
+            <input type="file" id="prodFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+            <div class="muted">上傳後會自動帶入圖片網址</div>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">儲存</button>

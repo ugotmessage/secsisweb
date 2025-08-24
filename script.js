@@ -24,15 +24,16 @@
   const $prodName = $('#prodName');
   const $prodDesc = $('#prodDesc');
   const $prodImg = $('#prodImg');
+  const $prodFile = $('#prodFile');
 
   const DEFAULT_IMAGE = 'https://source.unsplash.com/600x400/?supplement';
   const DEFAULT_PRODUCTS = [
-    { id:'vitamin-c', name:'維他命C 1000mg', desc:'高劑量每日補給，增強體力與精神，常備保健首選。', img:'https://source.unsplash.com/600x400/?vitamin' },
-    { id:'fish-oil', name:'高濃度魚油', desc:'Omega-3 含量高，支持心血管健康與日常保養。', img:'https://source.unsplash.com/600x400/?fish%20oil,supplements' },
-    { id:'collagen', name:'膠原蛋白粉', desc:'美妍養護，添加維生素C 配方，沖泡方便好入口。', img:'https://source.unsplash.com/600x400/?collagen,supplement' },
-    { id:'probiotics', name:'益生菌複方', desc:'多菌株高含量，幫助調整體質，維持消化道機能。', img:'https://source.unsplash.com/600x400/?probiotics,supplements' },
-    { id:'multi-vitamin', name:'綜合維他命', desc:'全方位補給日常所需營養素，簡單一次到位。', img:'https://source.unsplash.com/600x400/?multivitamin' },
-    { id:'vitamin-d', name:'維他命D3 2000 IU', desc:'居家必備好朋友，幫助鈣質吸收與免疫防護。', img:'https://source.unsplash.com/600x400/?vitamin%20D' }
+    { id:'vitamin-c', name:'維他命C 1000mg', desc:'高劑量每日補給，增強體力與精神，常備保健首選。', img:'https://picsum.photos/600/400?random=1' },
+    { id:'fish-oil', name:'高濃度魚油', desc:'Omega-3 含量高，支持心血管健康與日常保養。', img:'https://picsum.photos/600/400?random=2' },
+    { id:'collagen', name:'膠原蛋白粉', desc:'美妍養護，添加維生素C 配方，沖泡方便好入口。', img:'https://picsum.photos/600/400?random=3' },
+    { id:'probiotics', name:'益生菌複方', desc:'多菌株高含量，幫助調整體質，維持消化道機能。', img:'https://picsum.photos/600/400?random=4' },
+    { id:'multi-vitamin', name:'綜合維他命', desc:'全方位補給日常所需營養素，簡單一次到位。', img:'https://picsum.photos/600/400?random=5' },
+    { id:'vitamin-d', name:'維他命D3 2000 IU', desc:'居家必備好朋友，幫助鈣質吸收與免疫防護。', img:'https://picsum.photos/600/400?random=6' }
   ];
 
   // ====== Server helpers ======
@@ -108,22 +109,213 @@
   function clearItems(){ setItems([]); }
 
   // ====== Product utilities ======
-  function loadProducts(){ try{ const saved = JSON.parse(localStorage.getItem(PRODUCT_KEY) || 'null'); if(Array.isArray(saved) && saved.length){ return saved; } return DEFAULT_PRODUCTS.slice(); }catch(e){ return DEFAULT_PRODUCTS.slice(); } }
-  function saveProducts(items){ localStorage.setItem(PRODUCT_KEY, JSON.stringify(items)); }
-  function getProducts(){ return loadProducts(); }
-  function setProducts(items){ saveProducts(items); renderProducts(); renderAdminList(); }
-  function resetProducts(){ if(!isAuthedLocal()){ toast('需管理權限'); return; } localStorage.removeItem(PRODUCT_KEY); setProducts(DEFAULT_PRODUCTS.slice()); }
+  let cachedProducts = [];
+  
+  async function loadProducts(){
+    try{
+      const response = await fetch('./products-public.php');
+      if(!response.ok) throw new Error('API_ERROR');
+      const data = await response.json();
+      if(data.ok && Array.isArray(data.products)){
+        cachedProducts = data.products;
+        return data.products;
+      }
+      throw new Error('INVALID_RESPONSE');
+    }catch(e){
+      console.warn('Failed to load products from API, using defaults:', e);
+      return DEFAULT_PRODUCTS.slice();
+    }
+  }
+  
+  async function saveProducts(items){
+    try{
+      const response = await fetch('./products.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items)
+      });
+      if(!response.ok) throw new Error('SAVE_FAILED');
+      const data = await response.json();
+      if(data.ok){
+        cachedProducts = items;
+        return true;
+      }
+      throw new Error(data.error || 'SAVE_FAILED');
+    }catch(e){
+      console.error('Failed to save products:', e);
+      return false;
+    }
+  }
+  
+  async function getProducts(){
+    if(cachedProducts.length === 0){
+      await loadProducts();
+    }
+    return cachedProducts;
+  }
+  
+  async function setProducts(items){
+    const success = await saveProducts(items);
+    if(success){
+      renderProducts();
+      renderAdminList();
+    } else {
+      toast('儲存失敗，請重試');
+    }
+  }
+  
+  async function resetProducts(){
+    if(!isAuthedLocal()){ toast('需管理權限'); return; }
+    try{
+      const response = await fetch('./products.php', { method: 'PUT' });
+      if(!response.ok) throw new Error('RESET_FAILED');
+      const data = await response.json();
+      if(data.ok){
+        cachedProducts = data.products;
+        renderProducts();
+        renderAdminList();
+        toast('已重置為預設商品');
+      } else {
+        throw new Error(data.error || 'RESET_FAILED');
+      }
+    }catch(e){
+      console.error('Failed to reset products:', e);
+      toast('重置失敗，請重試');
+    }
+  }
 
-  function renderProducts(){ const products = getProducts(); $productGrid.empty(); products.forEach(function(p){ const $card = $('<article/>', { class:'product-card', 'data-id':p.id, 'data-name':p.name }); const $imgWrap = $('<div/>', { class:'product-image-wrap' }); const $img = $('<img/>', { src: p.img || DEFAULT_IMAGE, alt: `${p.name} 示意圖` }); const $info = $('<div/>', { class:'product-info' }); const $h3 = $('<h3/>', { text: p.name }); const $p = $('<p/>', { text: p.desc || '' }); const $btn = $('<button/>', { class:'btn btn-add add-to-inquiry', text:'加入詢問清單' }); $imgWrap.append($img); $info.append($h3,$p,$btn); $card.append($imgWrap,$info); $productGrid.append($card); }); }
+  function resolveImageSrc(path){
+    if(!path) return '';
+    const s = String(path).trim();
+    if(/^https?:\/\//i.test(s)) return s; // absolute URL
+    if(s.startsWith('/')) return s;        // site-root relative
+    return `./${s.replace(/^\.?\/+/, '')}`; // relative to current
+  }
+  
+  // 產品圖示系統
+  function getProductIcon(productId){
+    const productIcons = {
+      'vitamin-c': 'VC',
+      'fish-oil': 'Ω3',
+      'collagen': '膠原',
+      'probiotics': '益生',
+      'multi-vitamin': 'MV',
+      'vitamin-d': 'VD'
+    };
+    return productIcons[productId] || '?';
+  }
+
+  async function renderProducts(){
+    const products = await getProducts();
+    console.log('渲染商品，資料:', products); // 除錯用
+    $productGrid.empty();
+    products.forEach(function(p){
+      console.log('處理商品:', p.name, '圖片路徑:', p.img); // 除錯用
+      const $card = $('<article/>', { class:'product-card', 'data-id':p.id, 'data-name':p.name });
+      const $imgWrap = $('<div/>', { class:'product-image-wrap' });
+      const hasImg = !!(p.img && String(p.img).trim() !== '');
+      console.log('商品', p.name, '是否有圖片:', hasImg); // 除錯用
+      
+      if(hasImg && p.img.trim() !== ''){
+        const src = resolveImageSrc(p.img);
+        console.log('商品', p.name, '解析後圖片路徑:', src); // 除錯用
+        
+        // 嘗試載入圖片
+        const $img = $('<img/>', { alt: `${p.name} 示意圖` });
+        
+        // 圖片載入成功
+        $img.on('load', function(){
+          console.log('圖片載入成功:', src);
+          $(this).css('border', '2px solid green');
+        });
+        
+        // 圖片載入失敗 - 使用本地 SVG 或 CSS 預設圖片
+        $img.on('error', function(){
+          console.error('圖片載入失敗:', src);
+          $(this).remove();
+          
+          // 嘗試使用本地 SVG 檔案
+          const localSvgPath = `/images/default/${p.id}.svg`;
+          console.log('嘗試載入本地 SVG:', localSvgPath);
+          
+          const $svgImg = $('<img/>', { alt: `${p.name} 預設圖示` });
+          $svgImg.on('load', function(){
+            console.log('本地 SVG 載入成功:', localSvgPath);
+            $(this).css('border', '2px solid blue');
+          });
+          $svgImg.on('error', function(){
+            console.error('本地 SVG 也載入失敗:', localSvgPath);
+            $(this).remove();
+            
+            // 最後使用 CSS 預設圖片
+            const productType = p.id;
+            const $defaultImg = $('<div/>', { 
+              class: `default-product-img ${productType}`,
+              'aria-label': `${p.name} 預設圖示`
+            });
+            const iconText = getProductIcon(p.id);
+            $defaultImg.text(iconText);
+            $imgWrap.append($defaultImg);
+            console.log('使用 CSS 預設圖片:', productType);
+          });
+          
+          $svgImg.attr('src', localSvgPath);
+          $imgWrap.append($svgImg);
+        });
+        
+        // 設定圖片來源並開始載入
+        $img.attr('src', src);
+        $imgWrap.append($img);
+      }else{
+        console.log('商品', p.name, '使用預設示意圖');
+        
+        // 優先嘗試本地 SVG 檔案
+        const localSvgPath = `/images/default/${p.id}.svg`;
+        console.log('嘗試載入本地 SVG:', localSvgPath);
+        
+        const $svgImg = $('<img/>', { alt: `${p.name} 預設圖示` });
+        $svgImg.on('load', function(){
+          console.log('本地 SVG 載入成功:', localSvgPath);
+          $(this).css('border', '2px solid blue');
+        });
+        $svgImg.on('error', function(){
+          console.error('本地 SVG 載入失敗:', localSvgPath);
+          $(this).remove();
+          
+          // 使用 CSS 預設圖片
+          const productType = p.id;
+          const $defaultImg = $('<div/>', { 
+            class: `default-product-img ${productType}`,
+            'aria-label': `${p.name} 預設圖示`
+          });
+          const iconText = getProductIcon(p.id);
+          $defaultImg.text(iconText);
+          $imgWrap.append($defaultImg);
+          console.log('使用 CSS 預設圖片:', productType);
+        });
+        
+        $svgImg.attr('src', localSvgPath);
+        $imgWrap.append($svgImg);
+      }
+      
+      const $info = $('<div/>', { class:'product-info' });
+      const $h3 = $('<h3/>', { text: p.name });
+      const $p = $('<p/>', { text: p.desc || '' });
+      const $btn = $('<button/>', { class:'btn btn-add add-to-inquiry', text:'加入詢問清單' });
+      $info.append($h3,$p,$btn);
+      $card.append($imgWrap,$info);
+      $productGrid.append($card);
+    });
+  }
 
   // ====== Admin UI ======
   function openAdmin(){ if(!isAuthedLocal()){ toast('需管理權限'); return; } renderAdminList(); $adminDrawer.addClass('open').attr('aria-hidden','false'); $adminOverlay.removeAttr('hidden'); }
   function closeAdmin(){ $adminDrawer.removeClass('open').attr('aria-hidden','true'); $adminOverlay.attr('hidden', true); clearForm(); }
-  function renderAdminList(){ const products = getProducts(); $adminList.empty(); products.forEach(function(p){ const $li = $('<li/>', { class:'product-admin-item' }); const $title = $('<div/>', { class:'title', text: p.name }); const $actions = $('<div/>', { class:'admin-item-actions' }); const $edit = $('<button/>', { class:'btn btn-outline', text:'編輯' }).data('id', p.id); const $del = $('<button/>', { class:'btn btn-danger', text:'刪除' }).data('id', p.id); $actions.append($edit,$del); $li.append($title,$actions); $adminList.append($li); }); }
+  async function renderAdminList(){ const products = await getProducts(); $adminList.empty(); products.forEach(function(p){ const $li = $('<li/>', { class:'product-admin-item' }); const $title = $('<div/>', { class:'title', text: p.name }); const $actions = $('<div/>', { class:'admin-item-actions' }); const $edit = $('<button/>', { class:'btn btn-outline', text:'編輯' }).data('id', p.id); const $del = $('<button/>', { class:'btn btn-danger', text:'刪除' }).data('id', p.id); $actions.append($edit,$del); $li.append($title,$actions); $adminList.append($li); }); }
   function clearForm(){ $editingId.val(''); $prodName.val(''); $prodDesc.val(''); $prodImg.val(''); }
   function fillForm(p){ $editingId.val(p.id); $prodName.val(p.name); $prodDesc.val(p.desc || ''); $prodImg.val(p.img || ''); }
-  function upsertProduct(data){ if(!isAuthedLocal()){ toast('需管理權限'); return; } const items = getProducts(); const idx = items.findIndex(x => x.id === data.id); if(idx >= 0){ items[idx] = data; } else { items.push(data); } setProducts(items); toast('已儲存商品'); }
-  function deleteProduct(id){ if(!isAuthedLocal()){ toast('需管理權限'); return; } let items = getProducts().filter(x => x.id !== id); setProducts(items); toast('已刪除商品'); }
+  async function upsertProduct(data){ if(!isAuthedLocal()){ toast('需管理權限'); return; } const items = await getProducts(); const idx = items.findIndex(x => x.id === data.id); if(idx >= 0){ items[idx] = data; } else { items.push(data); } await setProducts(items); toast('已儲存商品'); }
+  async function deleteProduct(id){ if(!isAuthedLocal()){ toast('需管理權限'); return; } let items = await getProducts(); items = items.filter(x => x.id !== id); await setProducts(items); toast('已刪除商品'); }
 
   // ====== Inquiry drawer UI ======
   function renderList(){ const items = getItems(); $list.empty(); items.forEach(function(it){ const $li = $('<li/>', { class: 'inquiry-item' }); const $title = $('<div/>', { class: 'item-title', text: it.name }); const $rm = $('<button/>', { class: 'remove-btn', text: '移除' }).data('id', it.id); $li.append($title).append($rm); $list.append($li); }); $empty.toggle(items.length === 0); }
@@ -152,10 +344,51 @@
   $('#resetDefaults').on('click', function(){ resetProducts(); });
   $('#addProductBtn').on('click', function(){ if(!isAuthedLocal()){ toast('需管理權限'); return; } clearForm(); $prodName.focus(); });
   $adminList.on('click', '.btn-danger', function(){ deleteProduct($(this).data('id')); });
-  $adminList.on('click', '.btn-outline', function(){ const id = $(this).data('id'); const p = getProducts().find(x => x.id === id); if(p){ fillForm(p); } });
+  $adminList.on('click', '.btn-outline', async function(){ const id = $(this).data('id'); const products = await getProducts(); const p = products.find(x => x.id === id); if(p){ fillForm(p); } });
 
-  $productForm.on('submit', function(e){ e.preventDefault(); if(!isAuthedLocal()){ toast('需管理權限'); return; } const idRaw = $editingId.val().trim(); const name = $prodName.val().trim(); if(!name){ toast('請輸入商品名稱'); return; } const desc = $prodDesc.val().trim(); const img = ($prodImg.val().trim() || DEFAULT_IMAGE); const id = idRaw || slugify(name); upsertProduct({ id, name, desc, img }); clearForm(); });
+  $productForm.on('submit', function(e){
+    e.preventDefault();
+    if(!isAuthedLocal()){ toast('需管理權限'); return; }
+    const idRaw = $editingId.val().trim();
+    const name = $prodName.val().trim();
+    if(!name){ toast('請輸入商品名稱'); return; }
+    const desc = $prodDesc.val().trim();
+    let img = ($prodImg.val().trim() || '');
+    // 允許相對路徑（/uploads/...），如非 http(s) 開頭則視為相對 URL，直接使用
+    // 不再強制驗證 URL 格式
+    const id = idRaw || slugify(name);
+    upsertProduct({ id, name, desc, img });
+    clearForm();
+  });
   $('#cancelEdit').on('click', function(){ clearForm(); });
+
+  // 圖片上傳
+  $prodFile.on('change', async function(){
+    const f = this.files && this.files[0];
+    if(!f){ return; }
+    if(!isAuthedLocal()){ toast('需管理權限'); this.value=''; return; }
+    const fd = new FormData();
+    fd.append('file', f);
+    try{
+      const res = await fetch('./upload.php', { method:'POST', body: fd });
+      if(!res.ok){ throw new Error('UPLOAD_FAILED'); }
+      const json = await res.json();
+      if(json && json.ok && json.url){
+        $prodImg.val(json.url);
+        const editingId = ($editingId.val() || '').trim();
+        if(editingId){
+          const items = await getProducts();
+          const idx = items.findIndex(x => x.id === editingId);
+          if(idx >= 0){ items[idx].img = json.url; await setProducts(items); }
+          toast('圖片已上傳並套用');
+        }else{
+          toast('圖片已上傳');
+        }
+      }
+      else{ toast('上傳失敗'); }
+    }catch(e){ toast('上傳發生錯誤'); }
+    finally{ this.value=''; }
+  });
 
   function slugify(text){ return text.toString().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'').toLowerCase(); }
 

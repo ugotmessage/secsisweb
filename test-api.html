@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 測試頁面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>商品 API 測試頁面</h1>
+    
+    <div class="test-section">
+        <h3>1. 讀取商品列表（公開 API）</h3>
+        <button onclick="testGetProducts()">測試讀取商品</button>
+        <div id="getResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 新增商品（需要登入）</h3>
+        <input type="text" id="newName" placeholder="商品名稱" value="測試商品">
+        <textarea id="newDesc" placeholder="商品描述" rows="3">這是一個測試商品</textarea>
+        <input type="text" id="newImg" placeholder="圖片網址" value="https://source.unsplash.com/600x400/?test">
+        <button onclick="testAddProduct()">測試新增商品</button>
+        <div id="addResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 登入測試</h3>
+        <input type="text" id="adminToken" placeholder="管理員 Token" value="your-token-here">
+        <button onclick="testLogin()">測試登入</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 登入後新增商品</h3>
+        <button onclick="testAddProductAfterLogin()">測試登入後新增</button>
+        <div id="addAfterLoginResult" class="result"></div>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+        
+        async function testGetProducts() {
+            try {
+                const response = await fetch('./products-public.php');
+                const data = await response.json();
+                document.getElementById('getResult').innerHTML = 
+                    `<strong>成功！</strong><br>商品數量: ${data.products.length}<br>第一個商品: ${data.products[0]?.name || '無'}`;
+            } catch (error) {
+                document.getElementById('getResult').innerHTML = 
+                    `<strong>錯誤！</strong><br>${error.message}`;
+            }
+        }
+        
+        async function testLogin() {
+            const token = document.getElementById('adminToken').value;
+            try {
+                const response = await fetch('./auth.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                const data = await response.json();
+                if (data.ok) {
+                    isLoggedIn = true;
+                    document.getElementById('loginResult').innerHTML = 
+                        '<strong>登入成功！</strong>';
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<strong>登入失敗！</strong><br>錯誤: ${data.error}`;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<strong>錯誤！</strong><br>${error.message}`;
+            }
+        }
+        
+        async function testAddProduct() {
+            const name = document.getElementById('newName').value;
+            const desc = document.getElementById('newDesc').value;
+            const img = document.getElementById('newImg').value;
+            
+            try {
+                const response = await fetch('./products.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, desc, img })
+                });
+                const data = await response.json();
+                if (data.ok) {
+                    document.getElementById('addResult').innerHTML = 
+                        '<strong>新增成功！</strong><br>商品ID: ' + data.product.id;
+                } else {
+                    document.getElementById('addResult').innerHTML = 
+                        `<strong>新增失敗！</strong><br>錯誤: ${data.error}`;
+                }
+            } catch (error) {
+                document.getElementById('addResult').innerHTML = 
+                    `<strong>錯誤！</strong><br>${error.message}`;
+            }
+        }
+        
+        async function testAddProductAfterLogin() {
+            if (!isLoggedIn) {
+                document.getElementById('addAfterLoginResult').innerHTML = 
+                    '<strong>請先登入！</strong>';
+                return;
+            }
+            
+            const name = '登入後新增的商品 ' + Date.now();
+            const desc = '這是登入後新增的測試商品';
+            const img = 'https://source.unsplash.com/600x400/?supplement';
+            
+            try {
+                const response = await fetch('./products.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, desc, img })
+                });
+                const data = await response.json();
+                if (data.ok) {
+                    document.getElementById('addAfterLoginResult').innerHTML = 
+                        '<strong>新增成功！</strong><br>商品ID: ' + data.product.id;
+                } else {
+                    document.getElementById('addAfterLoginResult').innerHTML = 
+                        `<strong>新增失敗！</strong><br>錯誤: ${data.error}`;
+                }
+            } catch (error) {
+                document.getElementById('addAfterLoginResult').innerHTML = 
+                    `<strong>錯誤！</strong><br>${error.message}`;
+            }
+        }
+        
+        // 頁面載入時自動測試讀取商品
+        window.onload = testGetProducts;
+    </script>
+</body>
+</html>

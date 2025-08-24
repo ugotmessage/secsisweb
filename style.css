@@ -67,6 +67,7 @@ img{max-width:100%;display:block}
 .product-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(2,6,23,.12)}
 .product-image-wrap{aspect-ratio:3/2;overflow:hidden;background:#eef4ff}
 .product-image-wrap img{width:100%;height:100%;object-fit:cover}
+.placeholder-img{width:100%;height:100%;background:linear-gradient(135deg,#e6f0ff 0%,#f5f7ff 50%,#e8ecff 100%);display:flex;align-items:center;justify-content:center;color:#7c8db5;font-weight:700}
 .product-info{padding:14px}
 .product-info h3{margin:0 0 6px;font-size:18px}
 .product-info p{margin:0 0 12px;color:var(--muted);font-size:14px}
@@ -85,8 +86,17 @@ img{max-width:100%;display:block}
 /* Contact */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .contact-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.contact-card{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e6eefc;border-radius:12px;padding:14px;text-decoration:none;color:var(--text);box-shadow:var(--shadow);transition:transform .12s}
-.contact-card:hover{transform:translateY(-2px)}
+.contact-card{position:relative;overflow:hidden;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e6eefc;border-radius:12px;padding:14px;text-decoration:none;color:var(--text);box-shadow:var(--shadow);transition:transform .12s, box-shadow .12s}
+.contact-card::before{content:"";position:absolute;inset:auto -20% -40% auto;width:220px;height:220px;border-radius:50%;filter:blur(20px);opacity:.18;transform:rotate(0deg)}
+.contact-card:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(2,6,23,.14)}
+.contact-card .contact-icon{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#f1f5ff}
+.contact-card strong{font-weight:800}
+.contact-card.line{border-color:#A7F3D0;background:linear-gradient(180deg,#F0FFF4 0%,#FFFFFF 60%)}
+.contact-card.line .contact-icon{background:#10B981;color:#ffffff}
+.contact-card.line::before{background:radial-gradient(circle at 50% 50%, #10B981, #34D399)}
+.contact-card.email{border-color:#c7dbff;background:linear-gradient(180deg,#F5F8FF 0%,#FFFFFF 60%)}
+.contact-card.email .contact-icon{background:#2563eb;color:#ffffff}
+.contact-card.email::before{background:radial-gradient(circle at 50% 50%, #2563eb, #60a5fa)}
 .contact-icon{font-size:22px}
 .contact-form{background:#fff;border:1px solid #e6eefc;border-radius:12px;padding:16px;box-shadow:var(--shadow)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -148,4 +158,50 @@ input:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(
   .product-grid{grid-template-columns:1fr}
   .hero{padding:48px 0}
   .hero-content h1{font-size:32px}
+}
+
+/* 預設產品圖片樣式 */
+.default-product-img {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border-radius: 8px;
+}
+
+.default-product-img.vitamin-c {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+}
+
+.default-product-img.fish-oil {
+  background: linear-gradient(135deg, #4caf50, #388e3c);
+}
+
+.default-product-img.collagen {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.default-product-img.probiotics {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+}
+
+.default-product-img.multi-vitamin {
+  background: linear-gradient(135deg, #009688, #00695c);
+}
+
+.default-product-img.vitamin-d {
+  background: linear-gradient(135deg, #ffc107, #f57f17);
+}
+
+.default-product-img.placeholder {
+  background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+  color: #757575;
+  font-size: 24px;
+  text-align: center;
+  padding: 20px;
 }

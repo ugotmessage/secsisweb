@@ -4,6 +4,7 @@ require_once __DIR__ . '/env.php';
 return [
   'siteTitle' => env('SITE_TITLE', '美國保健品代購｜正品保證・快速送達台灣'),
   'brandText' => env('BRAND_TEXT', 'HealthShop 代購'),
+  'brandMark' => env('BRAND_MARK', 'HS'),
   'lineId' => env('LINE_ID', '@yourlineid'),
   'email' => env('EMAIL', 'service@yourbrand.tw'),
   // 可用明文或 SHA256 雜湊，兩者擇一設定即可
@@ -23,4 +24,9 @@ return [
   'seoKeywords' => env('SEO_KEYWORDS', '美國保健品代購,正品保證,快速送達台灣,維他命C,魚油,膠原蛋白,益生菌'),
   'siteUrl' => env('SITE_URL', ''),
   'ogImage' => env('OG_IMAGE', ''),
+  // 上傳設定
+  'uploadDir' => env('UPLOAD_DIR', __DIR__ . '/uploads'),
+  'uploadBaseUrl' => env('UPLOAD_BASE_URL', '/uploads'),
+  'uploadMaxBytes' => (int)env('UPLOAD_MAX_BYTES', 2 * 1024 * 1024), // 2MB
+  'uploadAllowedMime' => array_values(array_filter(array_map('trim', explode(',', (string)env('UPLOAD_ALLOWED_MIME', 'image/jpeg,image/png,image/webp,image/gif'))))),
 ];

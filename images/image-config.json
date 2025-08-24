@@ -1,0 +1,19 @@
+{
+  "default_images": {
+    "vitamin-c": "/images/default/vitamin-c.jpg",
+    "fish-oil": "/images/default/fish-oil.jpg",
+    "collagen": "/images/default/collagen.jpg",
+    "probiotics": "/images/default/probiotics.jpg",
+    "multi-vitamin": "/images/default/multi-vitamin.jpg",
+    "vitamin-d": "/images/default/vitamin-d.jpg"
+  },
+  "fallback_images": {
+    "vitamin-c": "https://picsum.photos/600/400?random=101",
+    "fish-oil": "https://picsum.photos/600/400?random=102",
+    "collagen": "https://picsum.photos/600/400?random=103",
+    "probiotics": "https://picsum.photos/600/400?random=104",
+    "multi-vitamin": "https://picsum.photos/600/400?random=105",
+    "vitamin-d": "https://picsum.photos/600/400?random=106"
+  },
+  "placeholder_image": "/images/default/placeholder.jpg"
+}
