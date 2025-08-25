@@ -74,7 +74,8 @@ $brandText = htmlspecialchars($siteConfig['brand']['text'], ENT_QUOTES, 'UTF-8')
 $brandMark = htmlspecialchars($siteConfig['brand']['mark'], ENT_QUOTES, 'UTF-8');
 $lineIdRaw = (string)($siteConfig['contact']['lineId']);
 $emailRaw = (string)($siteConfig['contact']['email']);
-$lineUrl = 'https://line.me/ti/p/' . rawurlencode($lineIdRaw);
+// LINE 連結格式：個人 ID 使用 /R/ti/p/，官方帳號使用 /ti/p/
+$lineUrl = 'https://line.me/R/ti/p/' . rawurlencode($lineIdRaw);
 $emailHref = 'mailto:' . $emailRaw . '?subject=' . rawurlencode('保健品代購詢問');
 $seoDesc = htmlspecialchars($siteConfig['site']['description'], ENT_QUOTES, 'UTF-8');
 $seoKeywords = htmlspecialchars($siteConfig['site']['keywords'], ENT_QUOTES, 'UTF-8');
@@ -438,20 +439,20 @@ $__capNonce = bin2hex(random_bytes(8));
             <input type="text" id="siteTitle" required />
           </div>
           <div class="form-field">
-            <label for="brandText">品牌名稱</label>
-            <input type="text" id="brandText" required />
+            <label for="adminBrandText">品牌名稱</label>
+            <input type="text" id="adminBrandText" required />
           </div>
           <div class="form-field">
             <label for="brandMark">品牌標記</label>
             <input type="text" id="brandMark" required />
           </div>
           <div class="form-field">
-            <label for="lineId">LINE ID</label>
-            <input type="text" id="lineId" required />
+            <label for="adminLineId">LINE ID</label>
+            <input type="text" id="adminLineId" required />
           </div>
           <div class="form-field">
-            <label for="email">聯絡信箱</label>
-            <input type="email" id="email" required />
+            <label for="adminEmail">聯絡信箱</label>
+            <input type="email" id="adminEmail" required />
           </div>
           <div class="form-field">
             <label for="siteConfigJson">進階：完整站台設定 JSON</label>

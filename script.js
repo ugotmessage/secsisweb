@@ -431,22 +431,27 @@
   // 站台設定相關函數
   async function loadSiteConfig(){
     try{
+      console.log('開始呼叫 site-config.php...');
       const res = await fetch('./site-config.php', { 
         method: 'GET',
         headers: { 'Cache-Control': 'no-cache' }
       });
+      console.log('Response status:', res.status);
       if(!res.ok){ throw new Error('LOAD_FAILED'); }
       const json = await res.json();
+      console.log('Response JSON:', json);
       if(json && json.ok && json.config){
         const cfg = json.config;
+        console.log('Config data:', cfg);
         $('#siteTitle').val(cfg.site?.title || '');
-        $('#brandText').val(cfg.brand?.text || '');
+        $('#adminBrandText').val(cfg.brand?.text || '');
         $('#brandMark').val(cfg.brand?.mark || '');
-        $('#lineId').val(cfg.contact?.lineId || '');
-        $('#email').val(cfg.contact?.email || '');
+        $('#adminLineId').val(cfg.contact?.lineId || '');
+        $('#adminEmail').val(cfg.contact?.email || '');
         // 將完整設定放入 JSON 編輯器
         try{ $('#siteConfigJson').val(JSON.stringify(cfg, null, 2)); }catch(_){ $('#siteConfigJson').val(''); }
         toast('設定已載入');
+        console.log('表單欄位已填入資料');
       }else{
         throw new Error('INVALID_RESPONSE');
       }
@@ -479,12 +484,12 @@
             ogImage: ''
           },
           brand: {
-            text: $('#brandText').val().trim(),
+            text: $('#adminBrandText').val().trim(),
             mark: $('#brandMark').val().trim()
           },
           contact: {
-            lineId: $('#lineId').val().trim(),
-            email: $('#email').val().trim()
+            lineId: $('#adminLineId').val().trim(),
+            email: $('#adminEmail').val().trim()
           }
         };
         if(!payload.site.title || !payload.brand.text || !payload.brand.mark || !payload.contact.lineId || !payload.contact.email){
